@@ -19,7 +19,6 @@ package v1alpha1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/cluster-api/pkg/apis/cluster/common"
 )
 
@@ -70,9 +69,11 @@ type MachineSpec struct {
 	// +optional
 	Taints []corev1.Taint `json:"taints,omitempty"`
 
-	// ProviderSpec details Provider-specific configuration to use during node creation.
-	// +optional
-	ProviderSpec ProviderSpec `json:"providerSpec"`
+	// InfrastructureRef is a required reference to a CRD describing the Machine infrastructure.
+	InfrastructureRef *corev1.ObjectReference
+
+	// Bootstrap describes the bootstrap mechanism used for the machine.
+	Bootstrap Bootstrap
 
 	// Versions of key software to use. This field is optional at cluster
 	// creation time, and omitting the field indicates that the cluster
@@ -172,13 +173,6 @@ type MachineStatus struct {
 	// +optional
 	ErrorMessage *string `json:"errorMessage,omitempty"`
 
-	// ProviderStatus details a Provider-specific status.
-	// It is recommended that providers maintain their
-	// own versioned API types that should be
-	// serialized/deserialized from this field.
-	// +optional
-	ProviderStatus *runtime.RawExtension `json:"providerStatus,omitempty"`
-
 	// Addresses is a list of addresses assigned to the machine. Queried from cloud provider, if available.
 	// +optional
 	Addresses []corev1.NodeAddress `json:"addresses,omitempty"`
@@ -199,9 +193,21 @@ type MachineStatus struct {
 	LastOperation *LastOperation `json:"lastOperation,omitempty"`
 
 	// Phase represents the current phase of machine actuation.
-	// E.g. Pending, Running, Terminating, Failed etc.
-	// +optional
-	Phase *string `json:"phase,omitempty"`
+	// E.g. Pending, Provisioning, Running, Deleting, Deleted, Failed etc.
+	Phase string `json:"phase,omitempty"`
+}
+
+// Bootstrap represents the details to bootstrap a Machine.
+type Bootstrap struct {
+	// Type indicates the type of bootstrap provider, such as kubeadm, openshift, rancher, etc.
+	Type string
+
+	// ConfigRef is a reference to a bootstrap provider-specific resource that holds configuration details.
+	ConfigRef *corev1.ObjectReference
+
+	// Data contains the bootstrap data, such as cloud-init details or post-boot ssh scripts.
+	// If nil, the Machine should remain in the Pending state.
+	Data *string
 }
 
 // LastOperation represents the detail of the last performed operation on the MachineObject.
