@@ -6,6 +6,7 @@
 cmd/clusterctl/clusterctl
 cmd/manager/manager
 bin
+*.jar
 
 # Test binary, build with `go test -c`
 *.test
@@ -41,4 +42,3 @@ docs/book/node_modules/
 config/ci/rbac/rbac_role_binding.yaml
 config/ci/rbac/rbac_role.yaml
 config/ci/manager/manager.yaml
-
