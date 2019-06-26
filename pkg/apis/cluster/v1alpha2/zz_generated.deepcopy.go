@@ -608,16 +608,6 @@ func (in *MachineStatus) DeepCopyInto(out *MachineStatus) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.Bootstrap != nil {
-		in, out := &in.Bootstrap, &out.Bootstrap
-		*out = new(string)
-		**out = **in
-	}
-	if in.Infrastructure != nil {
-		in, out := &in.Infrastructure, &out.Infrastructure
-		*out = new(string)
-		**out = **in
-	}
 	return
 }
 
