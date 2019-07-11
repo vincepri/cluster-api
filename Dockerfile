@@ -26,7 +26,7 @@ COPY go.mod go.mod
 COPY go.sum go.sum
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} GO111MODULE=on GOFLAGS="-mod=vendor" \
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} GO111MODULE=on \
     go build -a -ldflags '-extldflags "-static"' \
     -o manager sigs.k8s.io/cluster-api/cmd/manager
 
