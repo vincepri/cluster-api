@@ -25,10 +25,8 @@ import (
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/testing"
 	clientset "sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset"
-	clusterv1alpha2 "sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha2"
-	fakeclusterv1alpha2 "sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha2/fake"
-	clusterdeprecatedv1alpha1 "sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset/typed/deprecated/v1alpha1"
-	fakeclusterdeprecatedv1alpha1 "sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset/typed/deprecated/v1alpha1/fake"
+	v1alpha2internalversion "sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset/typed/v1alpha2/internalversion"
+	fakev1alpha2internalversion "sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset/typed/v1alpha2/internalversion/fake"
 )
 
 // NewSimpleClientset returns a clientset that will respond with the provided objects.
@@ -43,7 +41,7 @@ func NewSimpleClientset(objects ...runtime.Object) *Clientset {
 		}
 	}
 
-	cs := &Clientset{}
+	cs := &Clientset{tracker: o}
 	cs.discovery = &fakediscovery.FakeDiscovery{Fake: &cs.Fake}
 	cs.AddReactor("*", "*", testing.ObjectReaction(o))
 	cs.AddWatchReactor("*", func(action testing.Action) (handled bool, ret watch.Interface, err error) {
@@ -65,20 +63,20 @@ func NewSimpleClientset(objects ...runtime.Object) *Clientset {
 type Clientset struct {
 	testing.Fake
 	discovery *fakediscovery.FakeDiscovery
+	tracker   testing.ObjectTracker
 }
 
 func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 	return c.discovery
 }
 
-var _ clientset.Interface = &Clientset{}
-
-// ClusterV1alpha2 retrieves the ClusterV1alpha2Client
-func (c *Clientset) ClusterV1alpha2() clusterv1alpha2.ClusterV1alpha2Interface {
-	return &fakeclusterv1alpha2.FakeClusterV1alpha2{Fake: &c.Fake}
+func (c *Clientset) Tracker() testing.ObjectTracker {
+	return c.tracker
 }
 
-// ClusterDeprecatedV1alpha1 retrieves the ClusterDeprecatedV1alpha1Client
-func (c *Clientset) ClusterDeprecatedV1alpha1() clusterdeprecatedv1alpha1.ClusterDeprecatedV1alpha1Interface {
-	return &fakeclusterdeprecatedv1alpha1.FakeClusterDeprecatedV1alpha1{Fake: &c.Fake}
+var _ clientset.Interface = &Clientset{}
+
+// V1alpha2 retrieves the V1alpha2Client
+func (c *Clientset) V1alpha2() v1alpha2internalversion.V1alpha2Interface {
+	return &fakev1alpha2internalversion.FakeV1alpha2{Fake: &c.Fake}
 }

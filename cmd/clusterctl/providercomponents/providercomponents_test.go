@@ -26,7 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/providercomponents"
-	"sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha2"
+	"sigs.k8s.io/cluster-api/api/v1alpha2"
 )
 
 func TestLoadFromConfigMap(t *testing.T) {

@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/clusterdeployer/clusterclient"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/clusterdeployer/provider"
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/phases"
-	clusterv1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha2"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha2"
 )
 
 type ClusterDeployer struct {

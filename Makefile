@@ -108,22 +108,24 @@ generate-full: vendor ## Generate code
 
 .PHONY: generate-go
 generate-go: ## Runs go generate
-	go generate ./pkg/... ./cmd/...
+	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go \
+	object:headerFile=./hack/boilerplate/boilerplate.generatego.txt \
+	paths=./api/...
 
 .PHONY: generate-clientset
 generate-clientset: clean-clientset bin/client-gen bin/lister-gen bin/informer-gen ## Generate a typed clientset
 	bin/client-gen \
 		--clientset-name clientset \
-		--input-base sigs.k8s.io/cluster-api/pkg/apis \
-		--input deprecated/v1alpha1,cluster/v1alpha2 \
+		--input-base sigs.k8s.io/cluster-api/api \
+		--input v1alpha2 \
 		--output-package sigs.k8s.io/cluster-api/pkg/client/clientset_generated \
 		--go-header-file=./hack/boilerplate/boilerplate.generatego.txt
 	bin/lister-gen \
-		--input-dirs sigs.k8s.io/cluster-api/pkg/apis/deprecated/v1alpha1,sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha2 \
+		--input-dirs sigs.k8s.io/cluster-api/api/v1alpha2 \
 		--output-package sigs.k8s.io/cluster-api/pkg/client/listers_generated \
 		--go-header-file=./hack/boilerplate/boilerplate.generatego.txt
 	bin/informer-gen \
-		--input-dirs sigs.k8s.io/cluster-api/pkg/apis/deprecated/v1alpha1,sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha2 \
+		--input-dirs sigs.k8s.io/cluster-api/api/v1alpha2 \
 		--versioned-clientset-package sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset \
 		--listers-package sigs.k8s.io/cluster-api/pkg/client/listers_generated \
 		--output-package sigs.k8s.io/cluster-api/pkg/client/informers_generated \
@@ -132,10 +134,10 @@ generate-clientset: clean-clientset bin/client-gen bin/lister-gen bin/informer-g
 .PHONY: generate-manifests
 generate-manifests: ## Generate manifests e.g. CRD, RBAC etc.
 	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go \
-		paths=./pkg/... \
+		paths=./api/... \
 		crd:trivialVersions=true \
 		rbac:roleName=manager-role \
-		output:crd:dir=./config/crds
+		output:crd:dir=./config/crd/bases
 	## Copy files in CI folders.
 	cp -f ./config/rbac/role*.yaml ./config/ci/rbac/
 	cp -f ./config/manager/manager*.yaml ./config/ci/manager/
