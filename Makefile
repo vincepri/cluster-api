@@ -35,9 +35,12 @@ export KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT ?=60s
 export DOCKER_CLI_EXPERIMENTAL := enabled
 
 # Directories.
-ROOT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 TOOLS_DIR := hack/tools
+TOOLS_BIN_DIR := $(TOOLS_DIR)/bin
 BIN_DIR := bin
+
+# Binaries.
+CONTROLLER_GEN := $(TOOLS_BIN_DIR)/controller-gen
 
 # Image URL to use all building/pushing image targets
 REGISTRY ?= gcr.io/$(shell gcloud config get-value project)
@@ -93,8 +96,8 @@ clusterctl: lint-full ## Build clusterctl binary
 run: lint ## Run against the configured Kubernetes cluster in ~/.kube/config
 	go run ./main.go
 
-bin/controller-gen: $(TOOLS_DIR)/go.mod # Build controller-gen from tools folder.
-	cd $(TOOLS_DIR); go build -tags=tools -o $(ROOT_DIR)/$(BIN_DIR)/controller-gen sigs.k8s.io/controller-tools/cmd/controller-gen
+$(CONTROLLER_GEN): $(TOOLS_DIR)/go.mod # Build controller-gen from tools folder.
+	cd $(TOOLS_DIR); go build -tags=tools -o $(BIN_DIR)/controller-gen sigs.k8s.io/controller-tools/cmd/controller-gen
 
 ## --------------------------------------
 ## Linting
@@ -112,20 +115,20 @@ lint-full: ## Run slower linters to detect possible issues
 ## --------------------------------------
 
 .PHONY: generate
-generate: bin/controller-gen ## Generate code
+generate: $(CONTROLLER_GEN) ## Generate code
 	$(MAKE) generate-manifests
 	$(MAKE) generate-deepcopy
 	$(MAKE) gazelle
 
 .PHONY: generate-deepcopy
-generate-deepcopy: bin/controller-gen ## Runs controller-gen to generate deepcopy files
-	bin/controller-gen \
+generate-deepcopy: $(CONTROLLER_GEN) ## Runs controller-gen to generate deepcopy files
+	$(CONTROLLER_GEN) \
 		object:headerFile=./hack/boilerplate/boilerplate.generatego.txt \
 		paths=./api/...
 
 .PHONY: generate-manifests
-generate-manifests: bin/controller-gen ## Generate manifests e.g. CRD, RBAC etc.
-	bin/controller-gen \
+generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
+	$(CONTROLLER_GEN) \
 		paths=./api/... \
 		paths=./controllers/... \
 		crd:trivialVersions=true \
@@ -209,6 +212,7 @@ clean-bazel: ## Remove all generated bazel symlinks
 .PHONY: clean-bin
 clean-bin: ## Remove all generated binaries
 	rm -rf bin
+	rm -rf hack/tools/bin
 
 .PHONY: clean-clientset
 clean-clientset: ## Remove all generated clientset files
