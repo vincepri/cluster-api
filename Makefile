@@ -41,6 +41,7 @@ BIN_DIR := bin
 
 # Binaries.
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/controller-gen
+GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
 
 # Image URL to use all building/pushing image targets
 REGISTRY ?= gcr.io/$(shell gcloud config get-value project)
@@ -99,16 +100,19 @@ run: lint ## Run against the configured Kubernetes cluster in ~/.kube/config
 $(CONTROLLER_GEN): $(TOOLS_DIR)/go.mod # Build controller-gen from tools folder.
 	cd $(TOOLS_DIR); go build -tags=tools -o $(BIN_DIR)/controller-gen sigs.k8s.io/controller-tools/cmd/controller-gen
 
+$(GOLANGCI_LINT): $(TOOLS_DIR)/go.mod # Build golangci-lint from tools folder.
+	cd $(TOOLS_DIR); go build -tags=tools -o $(BIN_DIR)/golangci-lint github.com/golangci/golangci-lint/cmd/golangci-lint
+
 ## --------------------------------------
 ## Linting
 ## --------------------------------------
 
 .PHONY: lint
-lint: ## Lint codebase
-	bazel run //:lint $(BAZEL_ARGS)
+lint: $(GOLANGCI_LINT) ## Lint codebase
+	$(GOLANGCI_LINT) run -v
 
-lint-full: ## Run slower linters to detect possible issues
-	bazel run //:lint-full $(BAZEL_ARGS)
+lint-full: $(GOLANGCI_LINT) ## Run slower linters to detect possible issues
+	$(GOLANGCI_LINT) run -v --fast=false
 
 ## --------------------------------------
 ## Generate / Manifests
@@ -138,14 +142,9 @@ generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
 	cp -f ./config/rbac/*.yaml ./config/ci/rbac/
 	cp -f ./config/manager/manager*.yaml ./config/ci/manager/
 
-.PHONY: gazelle
-gazelle: ## Run Bazel Gazelle
-	(which bazel && ./hack/update-bazel.sh) || true
-
 .PHONY: modules
 modules: ## Runs go mod to ensure modules are up to date.
 	./hack/update-modules.sh
-	$(MAKE) gazelle
 
 ## --------------------------------------
 ## Docker
@@ -189,8 +188,8 @@ docker-push-ci: docker-build-ci  ## Build the docker image for ci
 	docker push "$(EXAMPLE_PROVIDER_IMG)-$(ARCH):$(TAG)"
 
 .PHONY: docker-push-manifest
-docker-push-manifest: ## Push the fat manifest docker image. TODO: Update bazel build to push manifest once https://github.com/bazelbuild/rules_docker/issues/300 get merged
-	## Minimum docker version 18.06.0 is required for creating and pushing manifest images
+docker-push-manifest: ## Push the fat manifest docker image.
+	## Minimum docker version 18.06.0 is required for creating and pushing manifest images.
 	docker manifest create --amend $(CONTROLLER_IMG):$(TAG) $(shell echo $(ALL_ARCH) | sed -e "s~[^ ]*~$(CONTROLLER_IMG)\-&:$(TAG)~g")
 	@for arch in $(ALL_ARCH); do docker manifest annotate --arch $${arch} ${CONTROLLER_IMG}:${TAG} ${CONTROLLER_IMG}-$${arch}:${TAG}; done
 	docker manifest push --purge ${CONTROLLER_IMG}:${TAG}
@@ -201,13 +200,8 @@ docker-push-manifest: ## Push the fat manifest docker image. TODO: Update bazel 
 
 .PHONY: clean
 clean: ## Remove all generated files
-	$(MAKE) clean-bazel
 	$(MAKE) clean-bin
 	$(MAKE) clean-book
-
-.PHONY: clean-bazel
-clean-bazel: ## Remove all generated bazel symlinks
-	bazel clean
 
 .PHONY: clean-bin
 clean-bin: ## Remove all generated binaries
@@ -221,7 +215,6 @@ clean-clientset: ## Remove all generated clientset files
 .PHONY: verify
 verify:
 	./hack/verify-boilerplate.sh
-	./hack/verify-bazel.sh
 	./hack/verify-doctoc.sh
 	./hack/verify-generated-files.sh
 
