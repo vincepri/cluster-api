@@ -169,6 +169,14 @@ docker-push-all: $(addprefix docker-push-,$(ALL_ARCH))
 docker-push-%:
 	$(MAKE) ARCH=$* docker-push
 
+.PHONY: docker-push-latest ## Push all the architecture docker images with the "latest" tag
+docker-push-latest-all: $(addprefix docker-push-latest-,$(ALL_ARCH))
+	$(MAKE) docker-push-manifest TAG=latest
+
+docker-push-latest-%:
+	docker tag $(CONTROLLER_IMG)-$(ARCH):$(TAG) $(CONTROLLER_IMG)-$(ARCH):latest
+	$(MAKE) ARCH=$* docker-push TAG=latest
+
 .PHONY: docker-push-manifest
 docker-push-manifest: ## Push the fat manifest docker image.
 	## Minimum docker version 18.06.0 is required for creating and pushing manifest images.
@@ -229,7 +237,7 @@ release-binary: $(RELEASE_DIR)
 .PHONY: release-staging-latest
 release-staging-latest: ## Builds and push container images to the staging bucket using "latest" tag.
 	REGISTRY=$(STAGING_REGISTRY) TAG=latest \
-		$(MAKE) docker-build-all docker-push-all
+		$(MAKE) docker-build-all docker-push-all docker-push-latest-all
 
 ## --------------------------------------
 ## Docker - Example Provider
