@@ -1,4 +1,5 @@
 # See https://cloud.google.com/cloud-build/docs/build-config
+timeout: 20m
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: bash
