@@ -2,6 +2,8 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     entrypoint: bash
+    env:
+      DOCKER_CLI_EXPERIMENTAL: enabled
     args:
       - -c
       - apt-get -y update && apt-get -y --no-install-recommends install build-essential && make release-staging-latest TAG=$_GIT_TAG
