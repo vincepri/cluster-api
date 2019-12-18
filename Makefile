@@ -189,14 +189,14 @@ generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
 		paths=./controllers/... \
 		paths=./bootstrap/kubeadm/controllers/... \
 		paths=./controlplane/kubeadm/controllers/... \
-		crd:preserveUnknownFields=false \
+		crd:crdVersions=v1,preserveUnknownFields=false \
 		rbac:roleName=manager-role \
 		output:crd:dir=./config/crd/bases \
 		output:webhook:dir=./config/webhook \
 		webhook
 	$(CONTROLLER_GEN) \
 		paths=./cmd/clusterctl/api/... \
-		crd:trivialVersions=true,preserveUnknownFields=false \
+		crd:crdVersions=v1,trivialVersions=true,preserveUnknownFields=false \
 		output:crd:dir=./cmd/clusterctl/config/crd/bases
 	## Copy files in CI folders.
 	cp -f ./config/rbac/*.yaml ./config/ci/rbac/
